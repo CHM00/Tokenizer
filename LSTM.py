@@ -73,7 +73,7 @@ def manual_lstm_numpy(x_np, weights):
     return res, h_prev, c_prev
 
 
-def mian():
+def main():
     tokens, x_np = prepare_inputs()
 
     np.random.seed(42)
@@ -95,4 +95,5 @@ def mian():
     print("c_prev.shape: ", c_prev.shape)
 
 if __name__ == "__mian__":
-    mian()
+    print("------LSTM实现----------")
+    main()
