@@ -94,6 +94,6 @@ def main():
     print("h_prev.shape: ", h_prev.shape)
     print("c_prev.shape: ", c_prev.shape)
 
-if __name__ == "__mian__":
+if __name__ == "__main__":
     print("------LSTM实现----------")
     main()
