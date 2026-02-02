@@ -48,8 +48,10 @@ def manual_lstm_numpy(x_np, weights):
     steps = []
 
     # 历史隐藏状态
-    h_prev = np.zeros((B, H), dtype='float32')
-    c_prev = np.zeros((B, H), dtype='float32')
+    h_prev = np.zeros((B, H), dtype='float32') # 短期记忆
+    c_prev = np.zeros((B, H), dtype='float32') # 长期记忆
+
+    # 每个时间步中的权重是共享的
     for t in range(T):
         x_t = x_np[:, t, :]
         # 遗忘门 @是矩阵乘法
