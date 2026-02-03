@@ -19,11 +19,11 @@ class MultiHeadAttention(nn.Module):
         self.fc = nn.Linear(dim, dim)
 
     def forward(self, q, k, v, mask=None):
-        batch_size, seq_len, dim = x.shape
+        batch_size = q.size(0)
 
-        q = self.q(q).view(batch_size, seq_len, self.heads, self.head_dim).permute(0, 2, 1, 3)
-        k = self.k(k).view(batch_size, seq_len, self.heads, self.head_dim).permute(0, 2, 1, 3)
-        v = self.v(v).view(batch_size, seq_len, self.heads, self.head_dim).permute(0, 2, 1, 3)
+        q = self.q(q).view(batch_size, -1, self.heads, self.head_dim).permute(0, 2, 1, 3)
+        k = self.k(k).view(batch_size, -1, self.heads, self.head_dim).permute(0, 2, 1, 3)
+        v = self.v(v).view(batch_size, -1, self.heads, self.head_dim).permute(0, 2, 1, 3)
 
         scores = torch.matmul(q, k.transpose(2, 3)) / self.dim ** 0.5
 
@@ -38,7 +38,7 @@ class MultiHeadAttention(nn.Module):
             atten_weights = self.dropout(atten_weights)
         out = torch.matmul(atten_weights, v)  # (batch_size, heads, seq_len, head_dim)
 
-        out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, dim)
+        out = out.transpose(1, 2).contiguous().view(batch_size, -1, self.dim)
         out = self.fc(out)
         return out
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     n_heads = 8
     mha = MultiHeadAttention(dim, n_heads)
     x = torch.randn(batch_size, seq_len, dim)  # torch.randn表示生成一个服从标准正态分布的张量，np.random.randn表示生成一个服从标准正态分布的数组
-    out = mha(x)
+    out = mha(x, x, x)
     print("---MultiHeadAttention Test---")
     print("x.shape: ", x.shape)
     print("out.shape: ", out.shape)

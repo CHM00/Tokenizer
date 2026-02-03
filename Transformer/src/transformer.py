@@ -23,6 +23,7 @@ class EncoderLayer(nn.Module):
 
         self.ffn = FeedForward(dim)
         self.layer_norm = LayerNorm(dim)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, src, src_mask):
         attention = self.self_attention(src, src, src, src_mask)
@@ -46,6 +47,7 @@ class DecoderLayer(nn.Module):
         self.cross_norm = LayerNorm(dim)
         self.ffn = FeedForward(dim)
         self.ffn_norm = LayerNorm(dim)
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, tgt, enc_output, src_mask, tgt_mask):
         _x = tgt
@@ -53,7 +55,8 @@ class DecoderLayer(nn.Module):
         x = self.self_norm(tgt + self.dropout(x))
 
         _x = x
-        _x = self.cross_attention(_x, enc_output, enc_output, src_mask)
+        # 在 Cross-Attention 阶段，Decoder 的每一个词都在回头看 Encoder 输出的所有信息。
+        _x = self.cross_attention(_x, enc_output, enc_output, src_mask)  # key 和 value 来自于 Encoder 的输出，即源句子的特征。
         x = self.cross_norm(x + self.dropout(_x))
 
         _x = x
@@ -94,6 +97,36 @@ class Transformer(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
+    def generate_mask(self, src, tgt):
+        # src: batch_size, src_len
+        # tgt: batch_size, tgt_len
+        # 这里是padding mask
+        src_mask = (src!=0).unsqueeze(1).unsqueeze(2)  # batch_size, 1, 1, src_len
+
+        # padding mask, 训练中存在填充为0的样本
+        tgt_len = tgt.size(1)
+        tgt_mask = (tgt!=0).unsqueeze(1).unsqueeze(2)  # batch_size, 1, 1, tgt_len
+
+        # padding mask 和 casual mask结合
+        # 因果掩码和填充掩码结合
+        tgt_sub_mask = torch.tril(torch.ones((tgt_len, tgt_len), device=tgt.device)).bool()
+        return src_mask, tgt_mask
+
+    def encoder(self, src, src_mask):
+        x = self.src_embedding(src) * math.sqrt(self.dim)  # 缩放嵌入, 当维度 dim 很大时（如 512 或 1024），每个维度的数值会因为分布原因变得相对较小。放大Embedding的量级
+        x = self.pos_encoder(x)
+        x = self.dropout(x)
+        for layer in self.encoder_layers:
+            x = layer(x, src_mask)
+        return x
+
+    def decoder(self, tgt, enc_output, src_mask, tgt_mask):
+        x = self.tgt_embedding(tgt) * math.sqrt(self.dim)
+        x = self.pos_encoder(x)
+        x = self.dropout(x)
+        for layer in self.decoder_layers:
+            x = layer(x, enc_output, src_mask, tgt_mask)
+        return x
 
 
     def forward(self, src, tgt):
