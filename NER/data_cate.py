@@ -96,7 +96,7 @@ def create_char_vocab(data_files, out_file, min_freq=1):
 # 规范化文本: 数据中可能同时包含全角字符(如：，。！？)和半角字符(如: ,.!?)，他们语义上相同, 但是会被视为两个不同的Token, 将所有全角字符转换为半角字符
 def normalize_text(text):
     '''
-        规范化文本
+        规范化文本（全角->半角）
     '''
     full_width = "０１２３４５６７８９ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ！＃＄％＆’（）＊＋，－．／：；＜＝＞？＠［＼］＾＿｀｛｜｝～＂"
     half_width = r"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&'" + r'()*+,-./:;<=>?@[\]^_`{|}~".'
